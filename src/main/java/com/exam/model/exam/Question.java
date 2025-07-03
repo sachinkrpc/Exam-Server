@@ -1,6 +1,6 @@
 package com.exam.model.exam;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 public class Question {

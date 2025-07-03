@@ -27,20 +27,14 @@ public class ExamserverApplication implements CommandLineRunner {
     public QuizRepository quizRepository;
 
     public static void main(String[] args) {
-
-
         SpringApplication.run(ExamserverApplication.class, args);
-
-
     }
 
     @Override
     public void run(String... args) throws Exception {
         try {
-
-
             System.out.println("starting code");
-//
+
             User user = new User();
 
             user.setFirstName("Sachin");
@@ -66,15 +60,8 @@ public class ExamserverApplication implements CommandLineRunner {
             User user1 = this.userService.createUser(user, userRoleSet);
             System.out.println(user1.getUsername());
 
-
         } catch (UserFoundException e) {
             e.printStackTrace();
-
-
         }
-
-
     }
-
-
 }
