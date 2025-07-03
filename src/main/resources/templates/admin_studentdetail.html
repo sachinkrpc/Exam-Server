@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Details - Exam Portal</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .expand-row { cursor: pointer; }
+        .exam-details { display: none; }
+        .exam-details.active { display: table-row; background: #f8f9fa; }
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .delete-btn:hover {
+            background-color: #c82333;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 300px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .modal-buttons {
+            margin-top: 20px;
+        }
+        .modal-btn {
+            padding: 8px 16px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .modal-btn.ok {
+            background-color: #dc3545;
+            color: white;
+        }
+        .modal-btn.cancel {
+            background-color: #6c757d;
+            color: white;
+        }
+        .alert {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+    <script>
+        function toggleDetails(rowId) {
+            var details = document.getElementById('details-' + rowId);
+            if (details.classList.contains('active')) {
+                details.classList.remove('active');
+            } else {
+                details.classList.add('active');
+            }
+        }
+
+        function showDeleteConfirmation(button) {
+            var userId = button.getAttribute('data-user-id');
+            var username = button.getAttribute('data-username');
+            var modal = document.getElementById('deleteModal');
+            var confirmText = document.getElementById('confirmText');
+            confirmText.textContent = 'Are you sure to delete ' + username + '?';
+            // Store the user ID for deletion
+            modal.setAttribute('data-user-id', userId);
+            modal.style.display = 'block';
+        }
+
+        function hideDeleteConfirmation() {
+            var modal = document.getElementById('deleteModal');
+            modal.style.display = 'none';
+        }
+
+        function confirmDelete() {
+            var modal = document.getElementById('deleteModal');
+            var userId = modal.getAttribute('data-user-id');
+            // Redirect to delete endpoint
+            window.location.href = '/admin/studentdetail/delete/' + userId;
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            var deleteModal = document.getElementById('deleteModal');
+            if (event.target == deleteModal) {
+                deleteModal.style.display = 'none';
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Exam Portal</h1>
+            <nav>
+                <a href="/admin/dashboard">Dashboard</a>
+                <a href="/admin/users">Users</a>
+                <a href="/logout">Logout</a>
+            </nav>
+        </header>
+        <main>
+            <h2 class="text-center">Student Details</h2>
+            
+            <!-- Test Message -->
+            <div th:if="${message}" class="alert alert-success" th:text="${message}"></div>
+            
+            <!-- Error Messages -->
+            <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+            
+            <!-- Success/Error Messages -->
+            <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+            <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}"></div>
+            
+            <div class="card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Username</th>
+                            <th>Details</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Dynamic student rows -->
+                        <tr th:each="student, iterStat : ${students}" class="expand-row" th:onclick="|toggleDetails(${student.id})|">
+                            <td th:text="${student.firstName}"></td>
+                            <td th:text="${student.lastName}"></td>
+                            <td th:text="${student.username}"></td>
+                            <td><button type="button">Show Exams</button></td>
+                            <td>
+                                <button type="button" class="delete-btn"
+                                        th:attr="data-user-id=${student.id},data-username=${student.username}"
+                                        onclick="event.stopPropagation(); showDeleteConfirmation(this);">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                        <tr th:each="student, iterStat : ${students}" th:id="|details-${student.id}|" class="exam-details">
+                            <td colspan="5">
+                                <strong>Exams & Marks:</strong>
+                                <div th:if="${userResults[student.id] != null and #lists.size(userResults[student.id]) > 0}">
+                                    <table style="width: 100%; margin-top: 10px; border-collapse: collapse;">
+                                        <thead>
+                                            <tr style="background-color: #f2f2f2;">
+                                                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Exam Title</th>
+                                                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Marks Obtained</th>
+                                                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Percentage</th>
+                                                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr th:each="result : ${userResults[student.id]}">
+                                                <td style="border: 1px solid #ddd; padding: 8px;" th:text="${result.quiz.title}">Exam Title</td>
+                                                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;" th:text="${result.marksObtained + ' / ' + result.maxMarks}">0/100</td>
+                                                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;" th:text="${#numbers.formatDecimal(result.percentage, 1, 2)} + '%'">0%</td>
+                                                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;" th:text="${result.examDate != null ? #temporals.format(result.examDate, 'dd-MM-yyyy HH:mm') : 'N/A'}">Date</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div th:if="${userResults[student.id] == null or #lists.size(userResults[student.id]) == 0}" style="color: #666; font-style: italic; margin-top: 10px;">
+                                    No exams attempted yet.
+                                </div>
+                            </td>
+                        </tr>
+                        <!-- End dynamic rows -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-center mt-2">
+                <a href="/admin/users" class="btn">Back to Manage Users</a>
+            </div>
+        </main>
+        <footer>
+            <p>&copy; Sachin Kumar</p>
+        </footer>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <h3>Confirm Delete</h3>
+            <p id="confirmText"></p>
+            <div class="modal-buttons">
+                <button class="modal-btn ok" onclick="confirmDelete()">OK</button>
+                <button class="modal-btn cancel" onclick="hideDeleteConfirmation()">Cancel</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

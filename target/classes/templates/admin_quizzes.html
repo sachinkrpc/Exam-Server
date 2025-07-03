@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Quizzes</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .duration-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .duration-group input {
+            width: 80px;
+        }
+        .alert { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 300px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .modal-buttons { margin-top: 20px; }
+        .modal-btn { padding: 8px 16px; margin: 0 5px; border: none; border-radius: 3px; cursor: pointer; }
+        .modal-btn.yes { background-color: #007bff; color: white; }
+        .modal-btn.no { background-color: #6c757d; color: white; }
+    </style>
+    <script>
+        function showConfirmation() {
+            var title = document.getElementById('title').value;
+            var maxMarks = document.getElementById('maxMarks').value;
+            var numberOfQuestions = document.getElementById('numberOfQuestions').value;
+            
+            if (!title.trim() || !maxMarks.trim() || !numberOfQuestions.trim()) {
+                alert('Please fill in all required fields');
+                return false;
+            }
+            
+            var modal = document.getElementById('confirmModal');
+            var confirmText = document.getElementById('confirmText');
+            confirmText.textContent = 'Are you sure you want to add the quiz "' + title + '"?';
+            modal.style.display = 'block';
+            return false;
+        }
+        
+        function hideConfirmation() {
+            var modal = document.getElementById('confirmModal');
+            modal.style.display = 'none';
+        }
+        
+        function confirmAdd() {
+            document.getElementById('quizForm').submit();
+        }
+        
+        window.onclick = function(event) {
+            var modal = document.getElementById('confirmModal');
+            if (event.target == modal) {
+                hideConfirmation();
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Exam Portal</h1>
+            <nav>
+                <a href="/admin/dashboard">Dashboard</a>
+                <a href="/admin/users">Users</a>
+                <a href="/admin/quizzes">Quizzes</a>
+                <a href="/logout">Logout</a>
+            </nav>
+        </header>
+        <main>
+            <h2 class="text-center">Manage Quizzes</h2>
+            
+            <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+            <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}"></div>
+            
+            <div class="card">
+                <p>Quiz management functionality will be implemented here.</p>
+            </div>
+            <div class="card">
+                <h3>Add New Quiz</h3>
+                <form id="quizForm" action="/admin/quizzes/add" method="post" onsubmit="return showConfirmation()">
+                    <div class="form-group">
+                        <label for="title">Quiz Title:</label>
+                        <input type="text" id="title" name="title" placeholder="Quiz Title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Description:</label>
+                        <textarea id="description" name="description" placeholder="Description"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="maxMarks">Max Marks:</label>
+                        <input type="number" id="maxMarks" name="maxMarks" placeholder="Max Marks" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="numberOfQuestions">Number of Questions:</label>
+                        <input type="number" id="numberOfQuestions" name="numberOfQuestions" placeholder="Number of Questions" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="durationHours">Exam Duration:</label>
+                        <div class="duration-group">
+                            <input type="number" id="durationHours" name="durationHours" placeholder="Hours" min="0" max="24" value="0">
+                            <span>Hours</span>
+                            <input type="number" id="durationMinutes" name="durationMinutes" placeholder="Minutes" min="0" max="59" value="0">
+                            <span>Minutes</span>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <button type="submit">Add Quiz</button>
+                    </div>
+                </form>
+            </div>
+            <div class="text-center mt-2">
+                <a href="/admin/dashboard" class="btn">Back to Dashboard</a>
+            </div>
+        </main>
+        <footer>
+            <p>&copy; Sachin Kumar</p>
+        </footer>
+    </div>
+    
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h3>Confirm Add Quiz</h3>
+            <p id="confirmText"></p>
+            <div class="modal-buttons">
+                <button class="modal-btn yes" onclick="confirmAdd()">Yes</button>
+                <button class="modal-btn no" onclick="hideConfirmation()">No</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

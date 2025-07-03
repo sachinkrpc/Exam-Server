@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Take Quiz - Exam Portal</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .quiz-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .timer-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #fff;
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 1000;
+            text-align: center;
+        }
+        .timer-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .timer-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .timer-warning {
+            color: #dc3545;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .question-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .question-number {
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        .question-text {
+            font-size: 16px;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        .option-group {
+            margin-bottom: 10px;
+        }
+        .option-label {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .option-label:hover {
+            background-color: #f8f9fa;
+        }
+        .option-label input[type="radio"] {
+            margin-right: 10px;
+        }
+        .submit-section {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 400px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .modal-buttons { margin-top: 20px; }
+        .modal-btn { padding: 8px 16px; margin: 0 5px; border: none; border-radius: 3px; cursor: pointer; }
+        .modal-btn.yes { background-color: #007bff; color: white; }
+        .modal-btn.no { background-color: #6c757d; color: white; }
+        .alert { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+    <script>
+        // Timer functionality
+        let timeLeft = 0;
+        let timerInterval;
+        let isSubmitted = false;
+        
+        function startTimer(durationInMinutes) {
+            timeLeft = durationInMinutes * 60; // Convert to seconds
+            updateTimerDisplay();
+            
+            timerInterval = setInterval(function() {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    autoSubmitQuiz();
+                }
+            }, 1000);
+        }
+        
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            const display = document.getElementById('timerDisplay');
+            
+            if (display) {
+                display.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                // Add warning class when less than 5 minutes remaining
+                if (timeLeft <= 300) { // 5 minutes = 300 seconds
+                    display.classList.add('timer-warning');
+                } else {
+                    display.classList.remove('timer-warning');
+                }
+            }
+        }
+        
+        function autoSubmitQuiz() {
+            if (!isSubmitted) {
+                isSubmitted = true;
+                alert('Time is up! Your quiz will be submitted automatically.');
+                document.getElementById('quizForm').submit();
+            }
+        }
+        
+        function showConfirmation() {
+            var modal = document.getElementById('confirmModal');
+            modal.style.display = 'block';
+            return false;
+        }
+        
+        function hideConfirmation() {
+            var modal = document.getElementById('confirmModal');
+            modal.style.display = 'none';
+        }
+        
+        function confirmSubmit() {
+            if (!isSubmitted) {
+                isSubmitted = true;
+                clearInterval(timerInterval);
+                document.getElementById('quizForm').submit();
+            }
+        }
+        
+        // Prevent form submission if already submitted
+        function preventDoubleSubmit() {
+            if (isSubmitted) {
+                return false;
+            }
+            return true;
+        }
+        
+        window.onclick = function(event) {
+            var modal = document.getElementById('confirmModal');
+            if (event.target == modal) {
+                hideConfirmation();
+            }
+        }
+        
+        // Start timer when page loads
+        window.onload = function() {
+            const quizDuration = document.getElementById('quizDuration').value;
+            if (quizDuration && quizDuration > 0) {
+                startTimer(parseInt(quizDuration));
+            }
+        }
+    </script>
+</head>
+<body>
+    <!-- Timer Display -->
+    <div class="timer-container" th:if="${quiz != null && quiz.durationMinutes > 0}">
+        <div class="timer-label">Time Remaining</div>
+        <div class="timer-display" id="timerDisplay">00:00</div>
+    </div>
+    
+    <div class="container">
+        <header>
+            <h1>Exam Portal</h1>
+            <nav>
+                <a href="/user/dashboard">Dashboard</a>
+                <a href="/logout">Logout</a>
+            </nav>
+        </header>
+        
+        <main>
+            <div class="quiz-container">
+                <h2 class="text-center">Quiz: <span th:text="${quiz != null ? quiz.title : 'Quiz Not Found'}">Quiz Title</span></h2>
+                
+                <!-- Success/Error Messages -->
+                <div th:if="${param.success}" class="alert alert-success" th:text="${param.success}"></div>
+                <div th:if="${param.error}" class="alert alert-error" th:text="${param.error}"></div>
+                
+                <!-- Show error if quiz is null -->
+                <div th:if="${quiz == null}" class="alert alert-error">
+                    <h3>Quiz Not Found</h3>
+                    <p>The quiz you're looking for doesn't exist or is not available.</p>
+                    <a href="/user/dashboard" class="btn">Back to Dashboard</a>
+                </div>
+                
+                <!-- Show quiz content only if quiz exists -->
+                <div th:if="${quiz != null}">
+                    <div class="card">
+                        <h3>Instructions</h3>
+                        <p th:text="${quiz.description != null ? quiz.description : 'No description available'}">Quiz description will appear here.</p>
+                        <p><strong>Total Questions:</strong> <span th:text="${quiz.numberOfQuestions != null ? quiz.numberOfQuestions : '0'}">0</span></p>
+                        <p><strong>Max Marks:</strong> <span th:text="${quiz.maxMarks != null ? quiz.maxMarks : '0'}">0</span></p>
+                        <p th:if="${quiz.durationMinutes > 0}"><strong>Duration:</strong> <span th:text="${quiz.durationMinutes}">0</span> minutes</p>
+                        <p th:if="${quiz.durationMinutes > 0}"><strong>Note:</strong> Quiz will be automatically submitted when time expires.</p>
+                    </div>
+                    
+                    <!-- Show error if no questions -->
+                    <div th:if="${questions == null || questions.isEmpty()}" class="alert alert-error">
+                        <h3>No Questions Available</h3>
+                        <p>This quiz doesn't have any questions yet.</p>
+                        <a href="/user/dashboard" class="btn">Back to Dashboard</a>
+                    </div>
+                    
+                    <!-- Show questions only if they exist -->
+                    <form th:if="${questions != null && !questions.isEmpty()}" id="quizForm" action="/user/quiz/submit" method="post" onsubmit="return showConfirmation() && preventDoubleSubmit()">
+                        <input type="hidden" name="quizId" th:value="${quiz.qId}">
+                        <input type="hidden" id="quizDuration" th:value="${quiz.durationMinutes}">
+                        
+                        <div th:each="question, iterStat : ${questions}" class="question-card">
+                            <div class="question-number">Question <span th:text="${iterStat.count}">1</span></div>
+                            <div class="question-text" th:text="${question.content != null ? question.content : 'Question content not available'}">Question content will appear here.</div>
+                            
+                            <div class="option-group">
+                                <label class="option-label">
+                                    <input type="radio" th:name="|answer_${question.quesId}|" th:value="${question.option1 != null ? question.option1 : ''}" required>
+                                    <span th:text="${question.option1 != null ? question.option1 : 'Option 1'}">Option 1</span>
+                                </label>
+                            </div>
+                            
+                            <div class="option-group">
+                                <label class="option-label">
+                                    <input type="radio" th:name="|answer_${question.quesId}|" th:value="${question.option2 != null ? question.option2 : ''}" required>
+                                    <span th:text="${question.option2 != null ? question.option2 : 'Option 2'}">Option 2</span>
+                                </label>
+                            </div>
+                            
+                            <div class="option-group">
+                                <label class="option-label">
+                                    <input type="radio" th:name="|answer_${question.quesId}|" th:value="${question.option3 != null ? question.option3 : ''}" required>
+                                    <span th:text="${question.option3 != null ? question.option3 : 'Option 3'}">Option 3</span>
+                                </label>
+                            </div>
+                            
+                            <div class="option-group">
+                                <label class="option-label">
+                                    <input type="radio" th:name="|answer_${question.quesId}|" th:value="${question.option4 != null ? question.option4 : ''}" required>
+                                    <span th:text="${question.option4 != null ? question.option4 : 'Option 4'}">Option 4</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="submit-section">
+                            <button type="submit" class="btn" style="font-size: 18px; padding: 12px 30px;">Submit Quiz</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>&copy; Sachin Kumar</p>
+        </footer>
+    </div>
+    
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h3>Confirm Quiz Submission</h3>
+            <p>Are you sure you want to submit your quiz?</p>
+            <p><strong>Note:</strong> You cannot change your answers after submission.</p>
+            <div class="modal-buttons">
+                <button class="modal-btn yes" onclick="confirmSubmit()">Yes, Submit</button>
+                <button class="modal-btn no" onclick="hideConfirmation()">Cancel</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

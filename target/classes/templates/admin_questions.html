@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Questions</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .alert { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .option-controls { margin: 10px 0; }
+        .option-controls button { margin-right: 10px; padding: 5px 10px; }
+        .option-group { margin-bottom: 15px; }
+        .option-input { display: flex; align-items: center; margin-bottom: 10px; }
+        .option-input input { flex: 1; margin-right: 10px; }
+        .option-input label { min-width: 80px; }
+        .question-progress { 
+            background-color: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 5px; 
+            margin-bottom: 20px; 
+            text-align: center;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #007bff;
+            transition: width 0.3s ease;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 400px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .modal-buttons { margin-top: 20px; }
+        .modal-btn { padding: 8px 16px; margin: 0 5px; border: none; border-radius: 3px; cursor: pointer; }
+        .modal-btn.yes { background-color: #007bff; color: white; }
+        .modal-btn.no { background-color: #6c757d; color: white; }
+    </style>
+    <script>
+        let optionCount = 4; // Start with 4 options
+        let currentQuestion = 1;
+        let totalQuestions = 1;
+        
+        // Get total questions and current question from URL parameters
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const total = urlParams.get('total');
+            const current = urlParams.get('current');
+            const quizId = urlParams.get('quizId');
+            
+            if (total) {
+                totalQuestions = parseInt(total);
+            }
+            if (current) {
+                currentQuestion = parseInt(current);
+            }
+            
+            updateProgress();
+            updateCorrectAnswerOptions();
+        };
+        
+        function updateProgress() {
+            const progressText = document.getElementById('progressText');
+            const progressFill = document.getElementById('progressFill');
+            
+            if (progressText) {
+                progressText.textContent = `Question ${currentQuestion} of ${totalQuestions}`;
+            }
+            
+            if (progressFill) {
+                const percentage = (currentQuestion / totalQuestions) * 100;
+                progressFill.style.width = percentage + '%';
+            }
+        }
+        
+        function addOption() {
+            optionCount++;
+            const optionsContainer = document.getElementById('optionsContainer');
+            
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'option-input';
+            optionDiv.innerHTML = `
+                <label for="option${optionCount}">Option ${optionCount}:</label>
+                <input type="text" id="option${optionCount}" name="option${optionCount}" placeholder="Option ${optionCount}" required>
+            `;
+            
+            optionsContainer.appendChild(optionDiv);
+            
+            // Update correct answer options
+            updateCorrectAnswerOptions();
+        }
+        
+        function deleteOption() {
+            if (optionCount > 2) { // Keep at least 2 options
+                const optionsContainer = document.getElementById('optionsContainer');
+                const lastOption = optionsContainer.lastElementChild;
+                if (lastOption) {
+                    optionsContainer.removeChild(lastOption);
+                    optionCount--;
+                    updateCorrectAnswerOptions();
+                }
+            } else {
+                alert('You must have at least 2 options');
+            }
+        }
+        
+        function updateCorrectAnswerOptions() {
+            const answerSelect = document.getElementById('answer');
+            answerSelect.innerHTML = '';
+            
+            for (let i = 1; i <= optionCount; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `Option ${i}`;
+                answerSelect.appendChild(option);
+            }
+        }
+        
+        function showConfirmation() {
+            var content = document.getElementById('content').value;
+            var answer = document.getElementById('answer').value;
+            
+            if (!content.trim() || !answer) {
+                alert('Please fill in all required fields');
+                return false;
+            }
+            
+            var modal = document.getElementById('confirmModal');
+            var confirmText = document.getElementById('confirmText');
+            confirmText.textContent = `Are you sure you want to add Question ${currentQuestion} of ${totalQuestions}?`;
+            modal.style.display = 'block';
+            return false;
+        }
+        
+        function hideConfirmation() {
+            var modal = document.getElementById('confirmModal');
+            modal.style.display = 'none';
+        }
+        
+        function confirmAdd() {
+            // Add hidden fields for current question number and total questions
+            var questionNumberInput = document.createElement('input');
+            questionNumberInput.type = 'hidden';
+            questionNumberInput.name = 'questionNumber';
+            questionNumberInput.value = currentQuestion;
+            document.getElementById('questionForm').appendChild(questionNumberInput);
+            
+            var totalQuestionsInput = document.createElement('input');
+            totalQuestionsInput.type = 'hidden';
+            totalQuestionsInput.name = 'total';
+            totalQuestionsInput.value = totalQuestions;
+            document.getElementById('questionForm').appendChild(totalQuestionsInput);
+            
+            // Add quiz ID if not already present
+            if (!document.querySelector('input[name="quizId"]')) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const quizId = urlParams.get('quizId');
+                if (quizId) {
+                    var quizIdInput = document.createElement('input');
+                    quizIdInput.type = 'hidden';
+                    quizIdInput.name = 'quizId';
+                    quizIdInput.value = quizId;
+                    document.getElementById('questionForm').appendChild(quizIdInput);
+                }
+            }
+            
+            document.getElementById('questionForm').submit();
+        }
+        
+        window.onclick = function(event) {
+            var modal = document.getElementById('confirmModal');
+            if (event.target == modal) {
+                hideConfirmation();
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Exam Portal</h1>
+            <nav>
+                <a href="/admin/dashboard">Dashboard</a>
+                <a href="/admin/users">Users</a>
+                <a href="/admin/quizzes">Quizzes</a>
+                <a href="/logout">Logout</a>
+            </nav>
+        </header>
+        <main>
+            <h2 class="text-center">Manage Questions</h2>
+            
+            <!-- Success/Error Messages -->
+            <div th:if="${param.success}" class="alert alert-success" th:text="${param.success}"></div>
+            <div th:if="${param.error}" class="alert alert-error" th:text="${param.error}"></div>
+            
+            <!-- Quiz Information -->
+            <div th:if="${quizTitle}" class="card" style="margin-bottom: 20px;">
+                <h3>Adding Questions to: <span th:text="${quizTitle}">Quiz Title</span></h3>
+            </div>
+            
+            <!-- Question Progress -->
+            <div class="question-progress">
+                <div id="progressText">Question 1 of 1</div>
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <form id="questionForm" method="post" action="/admin/questions/add" onsubmit="return showConfirmation()">
+                <!-- Hidden quiz ID field -->
+                <input type="hidden" name="quizId" th:value="${quizId}">
+                
+                <div class="form-group">
+                    <label for="content">Question Content:</label>
+                    <textarea id="content" name="content" rows="4" required></textarea>
+                </div>
+                
+                <div class="option-controls">
+                    <button type="button" onclick="addOption()" style="background-color: #28a745; color: white;">Add Option</button>
+                    <button type="button" onclick="deleteOption()" style="background-color: #dc3545; color: white;">Delete Last Option</button>
+                </div>
+                
+                <div id="optionsContainer" class="option-group">
+                    <div class="option-input">
+                        <label for="option1">Option 1:</label>
+                        <input type="text" id="option1" name="option1" placeholder="Option 1" required>
+                    </div>
+                    <div class="option-input">
+                        <label for="option2">Option 2:</label>
+                        <input type="text" id="option2" name="option2" placeholder="Option 2" required>
+                    </div>
+                    <div class="option-input">
+                        <label for="option3">Option 3:</label>
+                        <input type="text" id="option3" name="option3" placeholder="Option 3" required>
+                    </div>
+                    <div class="option-input">
+                        <label for="option4">Option 4:</label>
+                        <input type="text" id="option4" name="option4" placeholder="Option 4" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="answer">Correct Answer:</label>
+                    <select id="answer" name="answer" required>
+                        <option value="">Select correct answer</option>
+                    </select>
+                </div>
+                
+                <div class="text-center">
+                    <button type="submit">Add Question</button>
+                </div>
+            </form>
+            <div class="text-center mt-2">
+                <a href="/admin/dashboard" class="btn">Back to Dashboard</a>
+            </div>
+        </main>
+        <footer>
+            <p>&copy; Sachin Kumar</p>
+        </footer>
+    </div>
+    
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <h3>Confirm Add Question</h3>
+            <p id="confirmText"></p>
+            <div class="modal-buttons">
+                <button class="modal-btn yes" onclick="confirmAdd()">Yes</button>
+                <button class="modal-btn no" onclick="hideConfirmation()">No</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html> 

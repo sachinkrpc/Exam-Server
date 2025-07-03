@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Dashboard - Exam Portal</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .alert { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Exam Portal</h1>
+            <nav>
+                <a th:href="@{'/user/dashboard/' + ${user.username}}">Dashboard</a>
+                <a th:href="@{'/user/studentresult/' + ${user.username}}">My Results</a>
+                <a href="/logout">Logout</a>
+            </nav>
+        </header>
+        
+        <main>
+            <h2 class="text-center">Welcome, <span th:text="${user.firstName + ' ' + user.lastName}">User</span>!</h2>
+            
+            <!-- Success/Error Messages -->
+            <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+            <div th:if="${errorMessage}" class="alert alert-error" th:text="${errorMessage}"></div>
+            
+            <div class="card">
+                <h3>Available Quizzes</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(quizzes)}">
+                            <td colspan="3">No quizzes available at the moment. Please check back later.</td>
+                        </tr>
+                        <tr th:each="quiz : ${quizzes}">
+                            <td th:text="${quiz.title}"></td>
+                            <td th:text="${quiz.description}"></td>
+                            <td><a th:href="@{'/user/quiz/' + ${quiz.qId}}" class="btn">Take Quiz</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="text-center mt-2">
+                <a th:href="@{'/user/dashboard/' + ${user.username}}" class="btn">Refresh</a>
+            </div>
+        </main>
+        
+        <footer>
+            <p>&copy; Sachin Kumar</p>
+        </footer>
+    </div>
+</body>
+</html> 

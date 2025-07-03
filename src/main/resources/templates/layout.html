@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Exam Portal</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
+</head>
+<body>
+    <header>
+        <h1>Exam Portal</h1>
+        <nav>
+            <a th:href="@{/}">Home</a> |
+            <a th:href="@{/admin/dashboard}">Admin Dashboard</a> |
+            <a th:href="@{/user/dashboard}">User Dashboard</a> |
+            <a th:href="@{/logout}">Logout</a>
+        </nav>
+    </header>
+    <main>
+        <div th:fragment="content">
+            <!-- Content from other templates will be inserted here -->
+        </div>
+    </main>
+    <footer>
+        <p>&copy; Sachin Kumar</p>
+    </footer>
+</body>
+</html> 
